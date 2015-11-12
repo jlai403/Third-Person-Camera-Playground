@@ -28,8 +28,8 @@ public class CharacterMovement : MonoBehaviour {
 			vertical = Input.GetAxis("Vertical");
 			speed = new Vector2(horizontal, vertical).sqrMagnitude;
 
-			Debug.Log ("horizontal: " + horizontal);
-			Debug.Log ("vertical: " + vertical);
+			//Debug.Log ("horizontal: " + horizontal);
+			//Debug.Log ("vertical: " + vertical);
 
 			animator.SetFloat("Speed", speed);
 			animator.SetFloat("Direction", horizontal, directionDampTime, Time.deltaTime);
