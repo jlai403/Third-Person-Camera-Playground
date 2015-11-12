@@ -11,7 +11,16 @@ public class ThirdPersonCamera : MonoBehaviour {
 	private float smooth;
 	[SerializeField]
 	private Transform characterFollower;
+	[SerializeField]
+	private Vector3 offset = new Vector3 (0f, 1.5f, 0f);
+
 	private Vector3 targetPosition;
+	private Vector3 lookDirection;
+
+	private Vector3 velocityCamSmooth = Vector3.zero;
+	[SerializeField]
+	private float camSmoothDampTime = 0.1f;
+
 
 	// Use this for initialization
 	void Start () {
@@ -24,12 +33,19 @@ public class ThirdPersonCamera : MonoBehaviour {
 	}
 
 	void LateUpdate() {
-		targetPosition = characterFollower.position + characterFollower.up * distanceUp - characterFollower.forward * distanceAway;
-		Debug.DrawRay (characterFollower.position, Vector3.up * distanceUp, Color.red);
-		Debug.DrawRay (characterFollower.position, -characterFollower.forward * distanceAway, Color.blue);
-		Debug.DrawLine(characterFollower.position, targetPosition, Color.magenta);
+		Vector3 characterOffset = characterFollower.position + offset;
 
-		this.transform.position = Vector3.Lerp (transform.position, targetPosition, Time.deltaTime * smooth);
+		lookDirection = characterOffset - this.transform.position;
+		lookDirection.y = 0;
+		lookDirection.Normalize();
+
+		targetPosition = characterFollower.position + characterFollower.up * distanceUp - lookDirection * distanceAway;
+	
+		smoothPosition (this.transform.position, targetPosition);
 		this.transform.LookAt (characterFollower);
+	}
+
+	private void smoothPosition(Vector3 from, Vector3 to) {
+		this.transform.position = Vector3.SmoothDamp (from, to, ref velocityCamSmooth, camSmoothDampTime);
 	}
 }
