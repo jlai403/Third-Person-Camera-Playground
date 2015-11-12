@@ -39,7 +39,7 @@ public class CharacterMovement : MonoBehaviour {
 			horizontal = Input.GetAxis("Horizontal");
 			vertical = Input.GetAxis("Vertical");
 
-			StickToWorldspace(this.transform, gameCamera.transform, ref direction, ref speed); 
+			AdjustToCamera(this.transform, gameCamera.transform, ref direction, ref speed); 
 
 			animator.SetFloat("Speed", speed);
 			animator.SetFloat("Direction", direction, directionDampTime, Time.deltaTime);
@@ -62,7 +62,7 @@ public class CharacterMovement : MonoBehaviour {
 		return animatorStateInfo.fullPathHash == m_LocomotionId;
 	}
 
-	public void StickToWorldspace(Transform root, Transform camera, ref float directionOut, ref float speedOut) {
+	public void AdjustToCamera(Transform root, Transform camera, ref float directionOut, ref float speedOut) {
 		Vector3 rootDirection = root.forward;
 		Vector3 mouseDirection = new Vector3 (horizontal, 0, vertical);
 

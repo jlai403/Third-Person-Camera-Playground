@@ -11,8 +11,6 @@ public class ThirdPersonCamera : MonoBehaviour {
 	private float smooth;
 	[SerializeField]
 	private Transform characterFollower;
-	[SerializeField]
-	private Vector3 offset = new Vector3 (0f, 1.5f, 0f);
 
 	private Vector3 targetPosition;
 	private Vector3 lookDirection;
@@ -33,19 +31,30 @@ public class ThirdPersonCamera : MonoBehaviour {
 	}
 
 	void LateUpdate() {
-		Vector3 characterOffset = characterFollower.position + offset;
+		Vector3 characterOffset = characterFollower.position + new Vector3(0f, distanceUp, 0f);
 
 		lookDirection = characterOffset - this.transform.position;
 		lookDirection.y = 0;
 		lookDirection.Normalize();
 
 		targetPosition = characterFollower.position + characterFollower.up * distanceUp - lookDirection * distanceAway;
-	
-		smoothPosition (this.transform.position, targetPosition);
+		CompensateForWalls (characterOffset, ref targetPosition);
+		SmoothPosition (this.transform.position, targetPosition);
 		this.transform.LookAt (characterFollower);
 	}
 
-	private void smoothPosition(Vector3 from, Vector3 to) {
+	private void SmoothPosition(Vector3 from, Vector3 to) {
 		this.transform.position = Vector3.SmoothDamp (from, to, ref velocityCamSmooth, camSmoothDampTime);
 	}
+
+	private void CompensateForWalls(Vector3 from, ref Vector3 to) {
+		RaycastHit wallHit = new RaycastHit ();
+		if (Physics.Linecast (from, to, out wallHit)) {
+			to = new Vector3(wallHit.point.x, to.y, wallHit.point.z);
+		}
+	}
 }
+
+
+
+
