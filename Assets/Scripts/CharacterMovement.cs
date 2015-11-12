@@ -6,7 +6,7 @@ public class CharacterMovement : MonoBehaviour {
 	[SerializeField]
 	private Animator animator;
 	[SerializeField]
-	private ThirdPersonCamera gameCamera;
+	private MainCamera gameCamera;
 	[SerializeField]
 	private float directionDampTime = .25f;
 	[SerializeField]
@@ -51,11 +51,11 @@ public class CharacterMovement : MonoBehaviour {
 	void FixedUpdate() {
 		var movingLeftOrRight = (direction >= 0 && horizontal >= 0) || (direction <=0 && horizontal <=0);
 		if (IsInLocomotion() && movingLeftOrRight) {
-			Rotate(horizontal);
+			Turn(horizontal);
 		}
 	}
 
-	public void Rotate(float horizontal) {
+	public void Turn(float horizontal) {
 		var horizontalRotation = rotationDegreesPerSec * (horizontal < 0f ? -1f : 1f);
 		Vector3 rotationAmount = Vector3.Lerp (Vector3.zero, new Vector3 (0f, horizontalRotation, 0f), Mathf.Abs (horizontal)); 
 		Quaternion deltaRotation = Quaternion.Euler (rotationAmount * Time.deltaTime);

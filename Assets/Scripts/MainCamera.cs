@@ -25,12 +25,12 @@ struct CameraPosition {
 	}
 }
 
-public class ThirdPersonCamera : MonoBehaviour {
+public class MainCamera : MonoBehaviour {
 
 	[SerializeField]
-	private float distanceAway;
+	private float thirdPersonDistanceAway;
 	[SerializeField]
-	private float distanceUp;
+	private float thirdPersonDistanceUp;
 	[SerializeField]
 	private float smooth;
 	[SerializeField]
@@ -40,9 +40,7 @@ public class ThirdPersonCamera : MonoBehaviour {
 	[SerializeField]
 	private float camSmoothDampTime = 0.1f;
 	
-	private Vector3 targetPosition;
-	private Vector3 lookDirection;
-	private CamStates camState = CamStates.Behind;
+	private Vector3 cameraPosition;
 	private Vector3 velocityCamSmooth = Vector3.zero;
 	
 	// First Person Camera
@@ -53,12 +51,6 @@ public class ThirdPersonCamera : MonoBehaviour {
 	private float firstPersonLookSpeed = 1.5f;
 	[SerializeField]
 	private Vector2 firstPersonXAxisClamp = new Vector2 (-35.0f, 35.0f);
-
-
-	public enum CamStates {
-		Behind,
-		FirstPerson
-	}
 
 	// Use this for initialization
 	void Start () {
@@ -73,62 +65,52 @@ public class ThirdPersonCamera : MonoBehaviour {
 			characterFollower
 		);
 	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
 
 	void LateUpdate() {
-		UpdateCamState ();
+		Vector3 cameraView = Vector3.zero;
 
-		Vector3 characterOffset = characterFollower.position + new Vector3(0f, distanceUp, 0f);
-		Vector3 lookAt = characterOffset;
-
-		switch (camState) {
-		case CamStates.Behind:
-			ResetCamera();
-
-			lookDirection = characterOffset - this.transform.position;
-			lookDirection.y = 0;
-			lookDirection.Normalize();
-			targetPosition = characterOffset + characterFollower.up * distanceUp - characterFollower.forward * distanceAway;
-
-			break;
-		case CamStates.FirstPerson:
-			float mouseX = Input.GetAxisRaw ("Mouse X");
-			yAxisRotation += (mouseX * 0.5f * firstPersonLookSpeed);
-			yAxisRotation = Mathf.Clamp(yAxisRotation, firstPersonXAxisClamp.x, firstPersonXAxisClamp.y);
-
-			characterMovement.Rotate(mouseX);
-
-			float mouseY = Input.GetAxisRaw ("Mouse Y");
-			xAxisRotation -= (mouseY * 0.5f * firstPersonLookSpeed);
-			firstPersonCameraPosition.GameObject.localRotation = Quaternion.Euler(xAxisRotation, 0, 0);
-			Quaternion rotationShift = Quaternion.FromToRotation(this.transform.forward, firstPersonCameraPosition.GameObject.forward);
-			this.transform.rotation = rotationShift * this.transform.rotation;
-
-			targetPosition = firstPersonCameraPosition.GameObject.position;
-
-			lookAt = Vector3.Lerp(targetPosition + characterFollower.forward, this.transform.position + this.transform.forward, camSmoothDampTime + Time.deltaTime);
-
-			var firstPersonCameraDistance = Vector3.Distance(this.transform.position, firstPersonCameraPosition.GameObject.position);
-			lookAt = Vector3.Lerp(this.transform.position + this.transform.forward, lookAt, firstPersonCameraDistance);
-
-			break;
+		if (IsFirstPersonViewTriggered()) {
+			cameraView = FirstPersonCameraView();
+		} else {
+			ResetCamera();			
+			cameraView = ThirdPersonCameraView();
 		}
 
-		CompensateForWalls (characterOffset, ref targetPosition);
-		SmoothPosition (this.transform.position, targetPosition);
-		this.transform.LookAt (lookAt);
+		SmoothPosition (this.transform.position, cameraPosition);
+		this.transform.LookAt (cameraView);
 	}
 
-	private void UpdateCamState() {
-		if (Input.GetKey (KeyCode.Mouse1)) {
-			camState = CamStates.FirstPerson;
-		} else {
-			camState = CamStates.Behind;
-		}
+	private bool IsFirstPersonViewTriggered() {
+		return Input.GetKey (KeyCode.Mouse1);
+	}
+
+	private Vector3 ThirdPersonCameraView() {
+		Vector3 characterOffset = characterFollower.position + new Vector3(0f, thirdPersonDistanceUp, 0f);
+		cameraPosition = characterOffset + characterFollower.up * thirdPersonDistanceUp - characterFollower.forward * thirdPersonDistanceAway;
+		CompensateForWalls (characterOffset, ref cameraPosition);
+		return characterOffset;
+	}
+
+	private Vector3 FirstPersonCameraView() {
+		// left/right
+		float mouseX = Input.GetAxisRaw ("Mouse X");
+		yAxisRotation += (mouseX * 0.5f * firstPersonLookSpeed);
+		yAxisRotation = Mathf.Clamp (yAxisRotation, firstPersonXAxisClamp.x, firstPersonXAxisClamp.y);
+		characterMovement.Turn (mouseX);
+
+		// up/down
+		float mouseY = Input.GetAxisRaw ("Mouse Y");
+		xAxisRotation -= (mouseY * 0.5f * firstPersonLookSpeed);
+		firstPersonCameraPosition.GameObject.localRotation = Quaternion.Euler (xAxisRotation, 0, 0);
+		Quaternion rotationShift = Quaternion.FromToRotation (this.transform.forward, firstPersonCameraPosition.GameObject.forward);
+		this.transform.rotation = rotationShift * this.transform.rotation;
+		
+		cameraPosition = firstPersonCameraPosition.GameObject.position;
+		
+		Vector3 cameraView = Vector3.Lerp (cameraPosition + characterFollower.forward, this.transform.position + this.transform.forward, camSmoothDampTime + Time.deltaTime);
+		var firstPersonCameraDistance = Vector3.Distance (this.transform.position, firstPersonCameraPosition.GameObject.position);
+		cameraView = Vector3.Lerp (this.transform.position + this.transform.forward, cameraView, firstPersonCameraDistance);
+		return cameraView;
 	}
 
 	private void ResetCamera() {
