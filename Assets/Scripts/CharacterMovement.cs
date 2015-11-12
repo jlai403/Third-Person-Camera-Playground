@@ -12,7 +12,7 @@ public class CharacterMovement : MonoBehaviour {
 	[SerializeField]
 	private float directionSpeed = 1.5f;
 	[SerializeField]
-	private float rotationDegreesPerSec = 120f;
+	public float rotationDegreesPerSec = 120f;
 
 	private float direction = 0.0f;
 	private float speed = 0.0f;
@@ -51,11 +51,15 @@ public class CharacterMovement : MonoBehaviour {
 	void FixedUpdate() {
 		var movingLeftOrRight = (direction >= 0 && horizontal >= 0) || (direction <=0 && horizontal <=0);
 		if (IsInLocomotion() && movingLeftOrRight) {
-			var horizontalRotation = rotationDegreesPerSec * (horizontal < 0f ? -1f : 1f);
-			Vector3 rotationAmount = Vector3.Lerp(Vector3.zero, new Vector3 (0f, horizontalRotation, 0f), Mathf.Abs(horizontal)); 
-			Quaternion deltaRotation = Quaternion.Euler(rotationAmount * Time.deltaTime);
-			this.transform.rotation = this.transform.rotation * deltaRotation;
+			Rotate(horizontal);
 		}
+	}
+
+	public void Rotate(float horizontal) {
+		var horizontalRotation = rotationDegreesPerSec * (horizontal < 0f ? -1f : 1f);
+		Vector3 rotationAmount = Vector3.Lerp (Vector3.zero, new Vector3 (0f, horizontalRotation, 0f), Mathf.Abs (horizontal)); 
+		Quaternion deltaRotation = Quaternion.Euler (rotationAmount * Time.deltaTime);
+		this.transform.rotation = this.transform.rotation * deltaRotation;
 	}
 
 	public bool IsInLocomotion() {
